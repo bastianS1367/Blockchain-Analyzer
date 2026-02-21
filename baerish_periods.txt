@@ -1,0 +1,21 @@
+12.12.17 - 10.19.18
+2.23.21 - 7.20.21
+11.11.21 - 6.6.22
+12.16.24 - 4.10.25
+10.8.25 - 2.15.26
+
+
+SELECT 
+block_number, block_timestamp_month,input_count, output_count, is_coinbase, i
+FROM 
+transactions
+WHERE (
+(DATE (block_timestamp_month) BETWEEN 12-12-17 AND 10-19-18) OR
+(DATE (block_timestamp_month) BETWEEN 2-23-21 AND 7-20-21) OR
+(DATE (block_timestamp_month) BETWEEN 11-11-21 AND 6-6-22) OR
+(DATE (block_timestamp_month) BETWEEN 12-16-24 AND 4-10-25) OR
+(DATE (block_timestamp_month) BETWEEN 10-8-25 AND 2-15-26) 
+)
+AND
+i.value >= 10000000000  -- Wenn mehr als 100 Bitcoin transferiert wurden 
+UNNEST transactions.input AS i; -- Da input ein unterverzeichnis von transactions ist muss es zuerst entpackt werden 
