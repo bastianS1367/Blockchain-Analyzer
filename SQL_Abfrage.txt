@@ -1,0 +1,46 @@
+SELECT 
+    tx.hash AS transaction_hash,                     -- Wichtig für dein C++ Programm zum Identifizieren
+    ARRAY_TO_STRING(input.addresses, ',') AS wallet_address, -- Extrahiert die Sender-Wallet-Adresse
+    tx.block_timestamp,
+    tx.is_coinbase,
+    (input.value / 100000000) AS btc_amount,         -- Umrechnung Satoshi in BTC (8 Nullen)
+    btc_in_dollar.close AS btc_price_usd,
+    ((input.value / 100000000) * btc_in_dollar.close) AS transaction_value_usd
+FROM 
+    `bigquery-public-data.crypto_bitcoin.transactions` AS tx
+CROSS JOIN 
+    UNNEST(tx.inputs) AS input                       -- Hier wird der Input korrekt entpackt
+JOIN 
+    `bitcoin-algorythm.bitcoin_in_dollar_us.bitcoin_value_in_dollar`  AS btc_in_dollar
+    ON DATE(tx.block_timestamp) = DATE(btc_in_dollar.timestamp_ymd) -- Datum exakt verknüpfen
+WHERE 
+    -- Filter: Transaktion muss über 1.000.000 $ wert sein
+    ((input.value / 100000000) * btc_in_dollar.close) > 1000000 
+    AND 
+    (
+        -- ==========================================
+        -- DEINE URSPRÜNGLICHEN ZEITRÄUME (Bärenmärkte/Crashs)
+        -- ==========================================
+        (DATE(tx.block_timestamp) BETWEEN '2017-12-12' AND '2018-10-19') OR
+        (DATE(tx.block_timestamp) BETWEEN '2021-02-23' AND '2021-07-20') OR
+        (DATE(tx.block_timestamp) BETWEEN '2021-11-11' AND '2022-06-06') OR
+        (DATE(tx.block_timestamp) BETWEEN '2024-12-16' AND '2025-04-10') OR
+        (DATE(tx.block_timestamp) BETWEEN '2025-10-08' AND '2026-02-15') OR
+
+        -- ==========================================
+        -- NEU HINZUGEFÜGT: AUFSTIEGE ZU ALL-TIME-HIGHS (Bullenmärkte)
+        -- ==========================================
+        -- 2013 Bull Run (Aufstieg zum ersten 1.000$ ATH)
+        (DATE(tx.block_timestamp) BETWEEN '2013-01-01' AND '2013-12-04') OR 
+        -- 2016-2017 Bull Run (Aufstieg zum 20k$ ATH, direkt vor deinem Crash-Datum)
+        (DATE(tx.block_timestamp) BETWEEN '2016-01-01' AND '2017-12-11') OR 
+        -- 2020-2021 Bull Run Teil 1 (Aufstieg auf ~64k$)
+        (DATE(tx.block_timestamp) BETWEEN '2020-09-01' AND '2021-02-22') OR 
+        -- 2021 Bull Run Teil 2 (Zweiter Peak bei ~69k$)
+        (DATE(tx.block_timestamp) BETWEEN '2021-07-21' AND '2021-11-10') OR 
+        -- 2023-2024 Bull Run (ETF Approval & Halving Run)
+        (DATE(tx.block_timestamp) BETWEEN '2023-10-01' AND '2024-03-14')
+    )
+
+
+
